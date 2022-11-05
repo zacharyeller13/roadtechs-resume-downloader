@@ -1,7 +1,11 @@
 from exceptions import AlreadyLoggedInError
-from requests import RequestException
+from requests import RequestException, Session
 from roadtechs_downloader import authenticate
 import pytest
+
+def test_authenticate() -> None:
+
+    assert isinstance(authenticate("https://www.roadtechs.com/bbclient/login.php", "", ""), Session) 
 
 def test_authenticate_logged_in() -> None:
 
