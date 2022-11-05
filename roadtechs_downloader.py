@@ -4,7 +4,8 @@ from exceptions import AlreadyLoggedInError
 
 def authenticate(url: str, username: str, password: str) -> Session:
     """
-    Return persistant, logged in Session object for use in requests
+    Return persistant, logged in Session object for use in requests,
+    raising exception for response other than 200 or if user is already logged in elsewhere
     """
 
     session = Session()
@@ -24,7 +25,7 @@ def authenticate(url: str, username: str, password: str) -> Session:
             raise AlreadyLoggedInError
 
         return session
-        
+
     else:
         raise RequestException(f"Request returned {resp.status_code}")
 
