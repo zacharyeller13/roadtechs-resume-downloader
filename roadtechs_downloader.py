@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup, Comment
 from requests import Session
 
-def authenticate() -> Session:
+def authenticate(username: str, password: str) -> Session:
 
     raise NotImplementedError
 
