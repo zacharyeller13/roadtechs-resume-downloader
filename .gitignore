@@ -4,5 +4,5 @@ roadtechs_testing.ipynb
 string_body_out.pdf
 string_out.pdf
 
-/.vscode
-/.pytest_cache
+.vscode/
+.pytest_cache/

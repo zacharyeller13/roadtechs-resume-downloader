@@ -1,9 +1,10 @@
 from bs4 import BeautifulSoup, Comment
 from requests import Session
+from exceptions import AlreadyLoggedInError
 
 def authenticate(username: str, password: str) -> Session:
 
-    raise NotImplementedError
+    raise AlreadyLoggedInError
 
 def get_printable_profile() -> BeautifulSoup:
 
