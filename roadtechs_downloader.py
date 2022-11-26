@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup, Comment
-from requests import Session, RequestException
+from requests import RequestException, Session
+
 from exceptions import AlreadyLoggedInError
+
 
 def authenticate(url: str, username: str, password: str) -> Session:
     """
