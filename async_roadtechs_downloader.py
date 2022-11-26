@@ -60,7 +60,7 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 
 async def main(login_url: str, login_data: dict) -> None:
     async with ClientSession() as session:
-        response = await authenticate(session, login_url, "", "!")
+        response = await authenticate(session, login_url, "", "")
         print(response)
 
         # tasks = get_tasks("https://www.roadtechs.com/bbclient/profile_print.php", session)
