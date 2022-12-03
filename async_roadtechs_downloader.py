@@ -6,22 +6,12 @@ from bs4 import BeautifulSoup
 
 from exceptions import AlreadyLoggedInError
 
-login_url = "https://www.roadtechs.com/bbclient/login.php"
-login_data = {
-    "client_name": "",
-    "pass1": "",
-    "Login": "Login"
-}
-
-profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
-
-
 async def authenticate(session: ClientSession, url: str, username: str, password: str) -> ClientResponse:
     """
     Log into a ClientSession for use in async requests,
     raising exception for response other than 200 or if user already logged in
 
-    Return a ClientSession object
+    Return a ClientResponse object
     """
 
     resp = await session.post(url, data={
@@ -38,7 +28,7 @@ async def authenticate(session: ClientSession, url: str, username: str, password
 
             raise AlreadyLoggedInError("The user is already logged in elsewhere - please close all sessions")
 
-        return resp
+    return resp
 
 def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
     """
@@ -58,9 +48,16 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 
     return tasks
 
-async def main(login_url: str, login_data: dict) -> None:
+async def main() -> None:
+
+    login_url = "https://www.roadtechs.com/bbclient/login.php"
+    username = ""
+    password = ""
+
+    profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
+
     async with ClientSession() as session:
-        response = await authenticate(session, login_url, "", "")
+        response = await authenticate(session, login_url, username, password)
         print(response)
 
         # tasks = get_tasks("https://www.roadtechs.com/bbclient/profile_print.php", session)
@@ -73,4 +70,4 @@ async def main(login_url: str, login_data: dict) -> None:
 
 if __name__ == "__main__":
 
-    asyncio.run(main(login_url, login_data))
+    asyncio.run(main())
