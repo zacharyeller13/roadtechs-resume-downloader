@@ -4,7 +4,17 @@ import pdfkit
 from aiohttp import ClientResponse, ClientSession
 from bs4 import BeautifulSoup
 
-from exceptions import AlreadyLoggedInError
+from exceptions import AlreadyLoggedInError, LoginError
+
+
+def parse_login(soup: BeautifulSoup) -> None:
+    def find_error(tag):
+        return tag.name=='b' and "Error Logging In:" in tag.parent.contents[0]
+
+    if soup.find_all("input", {"name": "login2", "value": "Force Login"}):
+        raise AlreadyLoggedInError("The user is already logged in elsewhere - please close all sessions")
+    elif soup.find_all(find_error):
+        raise LoginError("Username or password was incorrect. Please retry.")
 
 async def authenticate(session: ClientSession, url: str, username: str, password: str) -> ClientResponse:
     """
@@ -24,9 +34,13 @@ async def authenticate(session: ClientSession, url: str, username: str, password
 
         soup = BeautifulSoup(await resp.text(), 'html.parser')
 
-        if soup.find_all("input", {"name": "login2", "value": "Force Login"}):
+        parse_login(soup)
 
-            raise AlreadyLoggedInError("The user is already logged in elsewhere - please close all sessions")
+    return resp
+
+async def deauth(session: ClientSession) -> ClientResponse:
+
+    resp = await session.post("https://www.roadtechs.com/bbclient/logout.php")
 
     return resp
 
@@ -65,7 +79,7 @@ async def main() -> None:
         # for response in responses:
         #     pdfkit.from_string(str(soup.body), "string_body_out.pdf")
 
-        await session.post("https://www.roadtechs.com/bbclient/logout.php")
+        await deauth(session)
         await session.close()
 
 if __name__ == "__main__":
