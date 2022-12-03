@@ -6,6 +6,7 @@ from aiohttp import ClientResponse, ClientSession
 from bs4 import BeautifulSoup
 
 from exceptions import AlreadyLoggedInError, LoginError
+from pdf_writer import write_pdf
 
 
 def parse_login(soup: BeautifulSoup) -> None:
@@ -83,10 +84,11 @@ async def main() -> None:
         response = await authenticate(session, login_url, username, password)
         print(response)
 
-        # tasks = get_tasks("https://www.roadtechs.com/bbclient/profile_print.php", session)
-        # responses = await asyncio.gather(*tasks)
-        # for response in responses:
-        #     pdfkit.from_string(str(soup.body), "string_body_out.pdf")
+        tasks = get_tasks("https://www.roadtechs.com/bbclient/profile_print.php", session)
+        responses = await asyncio.gather(*tasks)
+        for response in responses:
+            soup = BeautifulSoup(await response.text(), "html.parser")
+            # pdfkit.from_string(str(soup.body), "string_body_out.pdf")
 
         await deauth(session)
         await session.close()
