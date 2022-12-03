@@ -8,6 +8,8 @@ beautifulsoup4 = "*"
 requests = "*"
 pdfkit = "*"
 pytest = "*"
+aiohttp = "*"
+pytest-asyncio = "*"
 
 [dev-packages]
 ipykernel = "*"
