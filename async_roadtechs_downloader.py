@@ -1,4 +1,5 @@
 import asyncio
+from getpass import getpass
 
 import pdfkit
 from aiohttp import ClientResponse, ClientSession
@@ -19,7 +20,7 @@ def parse_login(soup: BeautifulSoup) -> None:
 
     if soup.find_all("input", {"name": "login2", "value": "Force Login"}):
         raise AlreadyLoggedInError("The user is already logged in elsewhere - please close all sessions")
-        
+
     elif soup.find_all(find_error):
         raise LoginError("Username or password was incorrect. Please retry.")
 
@@ -73,8 +74,8 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 async def main() -> None:
 
     login_url = "https://www.roadtechs.com/bbclient/login.php"
-    username = ""
-    password = ""
+    username = input("Please type your username: ")
+    password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
 
     profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
 
