@@ -13,7 +13,7 @@ bad_soup = BeautifulSoup("", "html.parser")
 
 def test_get_resume_name() -> None:
 
-    assert get_resume_name(soup) == "William Malloy"
+    assert get_resume_name(soup) == "Testy McTesterson"
 
 def test_get_resume_name_bad() -> None:
 
