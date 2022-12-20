@@ -54,7 +54,7 @@ async def deauth(session: ClientSession) -> ClientResponse:
 
     return await session.post("https://www.roadtechs.com/bbclient/logout.php")
 
-def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
+def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles
 
@@ -63,7 +63,7 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 
     tasks = []
 
-    for i in [6918]:
+    for i in range(resume_count):
         data = {
             "userid": f"{i}",
             "printable": "Printable+Profile"
@@ -87,16 +87,17 @@ def get_resume_count() -> int:
 async def main() -> None:
 
     login_url = "https://www.roadtechs.com/bbclient/login.php"
+    profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
+
     username = input("Please type your username: ")
     password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
-
-    profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
+    resume_count = get_resume_count()
 
     async with ClientSession() as session:
         response = await authenticate(session, login_url, username, password)
         print(response)
 
-        tasks = get_tasks("https://www.roadtechs.com/bbclient/profile_print.php", session)
+        tasks = get_tasks(profile_url, session, resume_count)
         responses = await asyncio.gather(*tasks)
         for response in responses:
             soup = BeautifulSoup(await response.text(), "html.parser")
