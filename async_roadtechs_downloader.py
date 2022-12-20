@@ -72,6 +72,18 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 
     return tasks
 
+def get_resume_count() -> int:
+
+    resume_count = input("Input the max number of resumes: ").strip()
+
+    try:
+        resume_count = int(resume_count)
+    except ValueError:
+        print("Valid number not provided, falling back to default value (6978)")
+        resume_count = 6978
+
+    return resume_count
+
 async def main() -> None:
 
     login_url = "https://www.roadtechs.com/bbclient/login.php"
