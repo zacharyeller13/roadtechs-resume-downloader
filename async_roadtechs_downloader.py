@@ -73,6 +73,11 @@ def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[async
     return tasks
 
 def get_resume_count() -> int:
+    """
+    Request the number of valid resumes from the user
+
+    Return the provided resume_count as an int or fallback to default value if input cannot be converted to int 
+    """
 
     resume_count = input("Input the max number of resumes: ").strip()
 
@@ -101,7 +106,6 @@ async def main() -> None:
         responses = await asyncio.gather(*tasks)
         for response in responses:
             soup = BeautifulSoup(await response.text(), "html.parser")
-            # pdfkit.from_string(str(soup.body), "string_body_out.pdf")
 
         await deauth(session)
         await session.close()
