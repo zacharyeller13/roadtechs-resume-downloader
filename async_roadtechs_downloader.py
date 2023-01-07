@@ -25,6 +25,7 @@ def parse_login(soup: BeautifulSoup) -> None:
     elif soup.find_all(find_error):
         raise LoginError("Username or password was incorrect. Please retry.")
 
+
 async def authenticate(session: ClientSession, url: str, username: str, password: str) -> ClientResponse:
     """
     Log into a `ClientSession` for use in async requests,
@@ -47,12 +48,14 @@ async def authenticate(session: ClientSession, url: str, username: str, password
 
     return resp
 
+
 async def deauth(session: ClientSession) -> ClientResponse:
     """
     Log out of `ClientSession`
     """
 
     return await session.post("https://www.roadtechs.com/bbclient/logout.php")
+
 
 def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
     """
@@ -72,6 +75,7 @@ def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[async
 
     return tasks
 
+
 def get_resume_count() -> int:
     """
     Request the number of valid resumes from the user
@@ -88,6 +92,7 @@ def get_resume_count() -> int:
         resume_count = 6978
 
     return resume_count
+
 
 async def main() -> None:
 
@@ -109,6 +114,7 @@ async def main() -> None:
 
         await deauth(session)
         await session.close()
+
 
 if __name__ == "__main__":
 
