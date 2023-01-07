@@ -25,6 +25,7 @@ def parse_login(soup: BeautifulSoup) -> None:
     elif soup.find_all(find_error):
         raise LoginError("Username or password was incorrect. Please retry.")
 
+
 async def authenticate(session: ClientSession, url: str, username: str, password: str) -> ClientResponse:
     """
     Log into a `ClientSession` for use in async requests,
@@ -47,6 +48,7 @@ async def authenticate(session: ClientSession, url: str, username: str, password
 
     return resp
 
+
 async def deauth(session: ClientSession) -> ClientResponse:
     """
     Log out of `ClientSession`
@@ -54,7 +56,8 @@ async def deauth(session: ClientSession) -> ClientResponse:
 
     return await session.post("https://www.roadtechs.com/bbclient/logout.php")
 
-def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
+
+def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles
 
@@ -63,7 +66,7 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 
     tasks = []
 
-    for i in [6918]:
+    for i in range(resume_count):
         data = {
             "userid": f"{i}",
             "printable": "Printable+Profile"
@@ -72,26 +75,46 @@ def get_tasks(url: str, session: ClientSession) -> list[asyncio.Task]:
 
     return tasks
 
+
+def get_resume_count() -> int:
+    """
+    Request the number of valid resumes from the user
+
+    Return the provided resume_count as an int or fallback to default value if input cannot be converted to int 
+    """
+
+    resume_count = input("Input the max number of resumes: ").strip()
+
+    try:
+        resume_count = int(resume_count)
+    except ValueError:
+        print("Valid number not provided, falling back to default value (6978)")
+        resume_count = 6978
+
+    return resume_count
+
+
 async def main() -> None:
 
     login_url = "https://www.roadtechs.com/bbclient/login.php"
+    profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
+
     username = input("Please type your username: ")
     password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
-
-    profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
+    resume_count = get_resume_count()
 
     async with ClientSession() as session:
         response = await authenticate(session, login_url, username, password)
         print(response)
 
-        tasks = get_tasks("https://www.roadtechs.com/bbclient/profile_print.php", session)
+        tasks = get_tasks(profile_url, session, resume_count)
         responses = await asyncio.gather(*tasks)
         for response in responses:
             soup = BeautifulSoup(await response.text(), "html.parser")
-            # pdfkit.from_string(str(soup.body), "string_body_out.pdf")
 
         await deauth(session)
         await session.close()
+
 
 if __name__ == "__main__":
 
