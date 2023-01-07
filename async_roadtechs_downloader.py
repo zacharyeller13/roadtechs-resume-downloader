@@ -57,6 +57,22 @@ async def deauth(session: ClientSession) -> ClientResponse:
     return await session.post("https://www.roadtechs.com/bbclient/logout.php")
 
 
+async def validate_resume(profile: BeautifulSoup) -> bool:
+    """
+    Parse HTML of profile to validate if it is a valid profile/resume
+
+    Return a boolean.
+    """
+
+    def find_error(tag):
+        return tag.name=="span" and tag.get('id')=="hdr1" and "Sorry, profile appears to be incomplete." in tag.contents[0]
+    
+    if profile.find_all(find_error):
+        return False
+
+    return True
+
+
 def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles

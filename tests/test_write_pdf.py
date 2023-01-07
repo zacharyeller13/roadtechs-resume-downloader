@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 from pdf_writer import get_resume_name, write_pdf
 
-with open(f"{os.path.dirname(__file__)}/roadtechs_testing.html") as f:
+with open(f"{os.path.dirname(__file__)}/valid_profile.html") as f:
     file = f.read()
 
 soup = BeautifulSoup(file, "html.parser")
