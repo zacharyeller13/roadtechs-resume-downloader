@@ -57,12 +57,14 @@ async def deauth(session: ClientSession) -> ClientResponse:
     return await session.post("https://www.roadtechs.com/bbclient/logout.php")
 
 
-async def validate_resume(profile: BeautifulSoup) -> bool:
+async def validate_resume(profile_response: ClientResponse) -> bool:
     """
     Parse HTML of profile to validate if it is a valid profile/resume
 
     Return a boolean.
     """
+
+    profile = BeautifulSoup(await profile_response.text(), "html.parser")
 
     def find_error(tag):
         return tag.name=="span" and tag.get('id')=="hdr1" and "Sorry, profile appears to be incomplete." in tag.contents[0]
