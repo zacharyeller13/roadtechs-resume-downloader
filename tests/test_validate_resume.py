@@ -2,7 +2,6 @@ import os
 import unittest.mock
 
 import pytest
-from bs4 import BeautifulSoup
 
 from async_roadtechs_downloader import validate_resume
 
