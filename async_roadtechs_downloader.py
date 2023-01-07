@@ -6,7 +6,7 @@ from aiohttp import ClientResponse, ClientSession
 from bs4 import BeautifulSoup
 
 from exceptions import AlreadyLoggedInError, LoginError
-from pdf_writer import write_pdf
+from pdf_writer import write_pdf, get_resume_name
 
 
 def parse_login(soup: BeautifulSoup) -> None:
@@ -75,6 +75,21 @@ async def validate_resume(profile_response: ClientResponse) -> bool:
     return True
 
 
+async def get_profile(url: str, session: ClientSession, user_id: int) -> ClientResponse:
+    """
+    Get a single profile from /profile_print.php using the passed in `user_id`
+
+    Return the ClientResponse
+    """
+
+    data = {
+        "userid": f"{user_id}",
+        "printable": "Printable+Profile"
+    }
+    
+    return await session.post(url, data=data)
+
+
 def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles
@@ -85,11 +100,7 @@ def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[async
     tasks = []
 
     for i in range(resume_count):
-        data = {
-            "userid": f"{i}",
-            "printable": "Printable+Profile"
-        }
-        tasks.append(asyncio.create_task(session.post(url, data=data)))
+        tasks.append(asyncio.create_task(get_profile(url, session, i)))
 
     return tasks
 
