@@ -75,7 +75,7 @@ async def validate_resume(profile_response: ClientResponse) -> bool:
     return True
 
 
-async def get_profile(url: str, session: ClientSession, user_id: int) -> ClientResponse:
+async def get_profile(url: str, session: ClientSession, user_id: int, semaphore: asyncio.Semaphore) -> str:
     """
     Get a single profile from /profile_print.php using the passed in `user_id`
 
@@ -87,10 +87,12 @@ async def get_profile(url: str, session: ClientSession, user_id: int) -> ClientR
         "printable": "Printable+Profile"
     }
     
-    return await session.post(url, data=data)
+    async with semaphore:
+        response = await session.post(url, data=data)
+        return await response.text()
 
 
-def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
+def get_profile_tasks(url: str, session: ClientSession, resume_count: int, semaphore: asyncio.Semaphore) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles
 
@@ -100,7 +102,7 @@ def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[async
     tasks = []
 
     for i in range(resume_count):
-        tasks.append(asyncio.create_task(get_profile(url, session, i)))
+        tasks.append(asyncio.create_task(get_profile(url, session, i, semaphore)))
 
     return tasks
 
@@ -131,15 +133,17 @@ async def main() -> None:
     username = input("Please type your username: ")
     password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
     resume_count = get_resume_count()
+    semaphore = asyncio.Semaphore(500)
 
     async with ClientSession() as session:
         response = await authenticate(session, login_url, username, password)
         print(response)
 
-        tasks = get_tasks(profile_url, session, resume_count)
+        tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
         responses = await asyncio.gather(*tasks)
         for response in responses:
-            soup = BeautifulSoup(await response.text(), "html.parser")
+            soup = BeautifulSoup(response, "html.parser")
+            print(get_resume_name(soup))
 
         await deauth(session)
         await session.close()
