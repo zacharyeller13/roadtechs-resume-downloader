@@ -130,21 +130,33 @@ async def main() -> None:
     login_url = "https://www.roadtechs.com/bbclient/login.php"
     profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
 
+    # Prompt user for login information
     username = input("Please type your username: ")
     password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
+
+    # Get the max resume count to be downloaded
+    # TODO: Change to get a stop OR a start and stop
     resume_count = get_resume_count()
+
+    # Set up a semaphore to prevent overloading the server with requests
     semaphore = asyncio.Semaphore(500)
 
     async with ClientSession() as session:
+
+        # Authenticate the ClientSession with username and password provided above
         response = await authenticate(session, login_url, username, password)
         print(response)
 
+        # Get async tasks and run to retrieve all profiles
         tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
         responses = await asyncio.gather(*tasks)
+
+        # Parse the responses
         for response in responses:
             soup = BeautifulSoup(response, "html.parser")
             print(get_resume_name(soup))
 
+        # Deauthorize and close the session 
         await deauth(session)
         await session.close()
 
