@@ -74,8 +74,22 @@ async def validate_resume(profile_response: ClientResponse) -> bool:
 
     return True
 
+def get_validation_tasks(responses: list[ClientResponse]) -> list[asyncio.Task]:
+    """
+    Get all async tasks for validating the returned profiles
 
-async def get_profile(url: str, session: ClientSession, user_id: int, semaphore: asyncio.Semaphore) -> str:
+    Return a list of `asyncio.Task` objects to be processed later
+    """
+
+    tasks = []
+
+    for response in responses:
+        tasks.append(asyncio.create_task(validate_resume(response)))
+
+    return tasks
+
+
+async def get_profile(url: str, session: ClientSession, user_id: int, semaphore: asyncio.Semaphore) -> ClientResponse:
     """
     Get a single profile from /profile_print.php using the passed in `user_id`
 
@@ -89,7 +103,7 @@ async def get_profile(url: str, session: ClientSession, user_id: int, semaphore:
     
     async with semaphore:
         response = await session.post(url, data=data)
-        return await response.text()
+        return response
 
 
 def get_profile_tasks(url: str, session: ClientSession, resume_count: int, semaphore: asyncio.Semaphore) -> list[asyncio.Task]:
@@ -148,13 +162,20 @@ async def main() -> None:
         print(response)
 
         # Get async tasks and run to retrieve all profiles
-        tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
-        responses = await asyncio.gather(*tasks)
+        profile_tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
+        responses = await asyncio.gather(*profile_tasks)
 
         # Parse the responses
         for response in responses:
-            soup = BeautifulSoup(response, "html.parser")
+            soup = BeautifulSoup(await response.text(), "html.parser")
             print(get_resume_name(soup))
+
+        # Get async tasks and run to validate profiles
+        validation_tasks = get_validation_tasks(responses)
+        validations = await asyncio.gather(*validation_tasks)
+
+        for validation in validations:
+            print(validation)
 
         # Deauthorize and close the session 
         await deauth(session)
