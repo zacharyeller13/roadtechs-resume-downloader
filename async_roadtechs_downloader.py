@@ -6,7 +6,7 @@ from aiohttp import ClientResponse, ClientSession
 from bs4 import BeautifulSoup
 
 from exceptions import AlreadyLoggedInError, LoginError
-from pdf_writer import write_pdf
+from pdf_writer import write_pdf, get_resume_name
 
 
 def parse_login(soup: BeautifulSoup) -> None:
@@ -75,7 +75,24 @@ async def validate_resume(profile_response: ClientResponse) -> bool:
     return True
 
 
-def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[asyncio.Task]:
+async def get_profile(url: str, session: ClientSession, user_id: int, semaphore: asyncio.Semaphore) -> str:
+    """
+    Get a single profile from /profile_print.php using the passed in `user_id`
+
+    Return the ClientResponse
+    """
+
+    data = {
+        "userid": f"{user_id}",
+        "printable": "Printable+Profile"
+    }
+    
+    async with semaphore:
+        response = await session.post(url, data=data)
+        return await response.text()
+
+
+def get_profile_tasks(url: str, session: ClientSession, resume_count: int, semaphore: asyncio.Semaphore) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles
 
@@ -85,11 +102,7 @@ def get_tasks(url: str, session: ClientSession, resume_count: int) -> list[async
     tasks = []
 
     for i in range(resume_count):
-        data = {
-            "userid": f"{i}",
-            "printable": "Printable+Profile"
-        }
-        tasks.append(asyncio.create_task(session.post(url, data=data)))
+        tasks.append(asyncio.create_task(get_profile(url, session, i, semaphore)))
 
     return tasks
 
@@ -117,19 +130,33 @@ async def main() -> None:
     login_url = "https://www.roadtechs.com/bbclient/login.php"
     profile_url = "https://www.roadtechs.com/bbclient/profile_print.php"
 
+    # Prompt user for login information
     username = input("Please type your username: ")
     password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
+
+    # Get the max resume count to be downloaded
+    # TODO: Change to get a stop OR a start and stop
     resume_count = get_resume_count()
 
+    # Set up a semaphore to prevent overloading the server with requests
+    semaphore = asyncio.Semaphore(500)
+
     async with ClientSession() as session:
+
+        # Authenticate the ClientSession with username and password provided above
         response = await authenticate(session, login_url, username, password)
         print(response)
 
-        tasks = get_tasks(profile_url, session, resume_count)
+        # Get async tasks and run to retrieve all profiles
+        tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
         responses = await asyncio.gather(*tasks)
-        for response in responses:
-            soup = BeautifulSoup(await response.text(), "html.parser")
 
+        # Parse the responses
+        for response in responses:
+            soup = BeautifulSoup(response, "html.parser")
+            print(get_resume_name(soup))
+
+        # Deauthorize and close the session 
         await deauth(session)
         await session.close()
 
