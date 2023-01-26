@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from aiohttp_extensions import authenticate, deauth
-from pdf_writer import write_pdf, get_resume_name
+from pdf_writer import write_pdf
 from tasks import get_profile_tasks, get_validation_tasks
 
 
@@ -69,7 +69,10 @@ async def main() -> None:
 
         # Need to write only valid resumes to PDF files
         # Do this for the initial set of responses, then again below for each request-validation loop
-        # TODO
+        for response, is_valid in zip(responses, validations):
+
+            if is_valid:
+                write_pdf(BeautifulSoup(await response.text(), "html.parser"))
 
         # All other validations
         while valid_count != resume_count:
