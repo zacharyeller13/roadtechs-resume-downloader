@@ -1,7 +1,7 @@
 import pytest
 from aiohttp import ClientResponseError, ClientSession
 
-from async_roadtechs_downloader import authenticate, deauth
+from aiohttp_extensions import authenticate, deauth
 from exceptions import AlreadyLoggedInError, LoginError
 
 
@@ -11,8 +11,6 @@ async def test_authenticate() -> None:
     async with ClientSession() as session:
         result = await authenticate(session, "https://www.roadtechs.com/bbclient/login.php", "", "")
         assert result.status == 200
-
-        # await session.post("https://www.roadtechs.com/bbclient/logout.php")
 
 @pytest.mark.asyncio
 async def test_authenticate_logged_in() -> None:
