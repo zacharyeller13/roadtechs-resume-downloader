@@ -74,8 +74,22 @@ async def validate_resume(profile_response: ClientResponse) -> bool:
 
     return True
 
+def get_validation_tasks(responses: list[ClientResponse]) -> list[asyncio.Task]:
+    """
+    Get all async tasks for validating the returned profiles
 
-async def get_profile(url: str, session: ClientSession, user_id: int, semaphore: asyncio.Semaphore) -> str:
+    Return a list of `asyncio.Task` objects to be processed later
+    """
+
+    tasks = []
+
+    for response in responses:
+        tasks.append(asyncio.create_task(validate_resume(response)))
+
+    return tasks
+
+
+async def get_profile(url: str, session: ClientSession, user_id: int, semaphore: asyncio.Semaphore) -> ClientResponse:
     """
     Get a single profile from /profile_print.php using the passed in `user_id`
 
@@ -89,10 +103,12 @@ async def get_profile(url: str, session: ClientSession, user_id: int, semaphore:
     
     async with semaphore:
         response = await session.post(url, data=data)
-        return await response.text()
+        return response
 
 
-def get_profile_tasks(url: str, session: ClientSession, resume_count: int, semaphore: asyncio.Semaphore) -> list[asyncio.Task]:
+def get_profile_tasks(
+    url: str, session: ClientSession, end_profile: int, semaphore: asyncio.Semaphore, start_profile: int = 0, 
+) -> list[asyncio.Task]:
     """
     Get all async tasks for requesting printable profiles
 
@@ -101,11 +117,10 @@ def get_profile_tasks(url: str, session: ClientSession, resume_count: int, semap
 
     tasks = []
 
-    for i in range(resume_count):
+    for i in range(start_profile, end_profile):
         tasks.append(asyncio.create_task(get_profile(url, session, i, semaphore)))
 
     return tasks
-
 
 def get_resume_count() -> int:
     """
@@ -148,13 +163,36 @@ async def main() -> None:
         print(response)
 
         # Get async tasks and run to retrieve all profiles
-        tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
-        responses = await asyncio.gather(*tasks)
+        profile_tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
+        responses = await asyncio.gather(*profile_tasks)
 
-        # Parse the responses
-        for response in responses:
-            soup = BeautifulSoup(response, "html.parser")
-            print(get_resume_name(soup))
+        # Get async validation tasks and run to validate profiles
+        validation_tasks = get_validation_tasks(responses)
+        validations = await asyncio.gather(*validation_tasks)
+
+        # Request and validation loop until valid_count == resume_count
+        valid_count = sum([validation for validation in validations if validation])
+        start_profile = resume_count
+        end_profile = resume_count + (resume_count - valid_count) + 1
+        print(valid_count, start_profile, end_profile)
+
+        while valid_count != resume_count:
+            
+            print(f"Valid resumes found: {valid_count}")
+            print(f"Fetching profiles {start_profile} through {end_profile}")
+
+            # Get profile tasks and run
+            profile_tasks = get_profile_tasks(profile_url, session, end_profile, semaphore, start_profile)
+            responses = await asyncio.gather(*profile_tasks)
+
+            # Get validation tasks and run
+            validation_tasks = get_validation_tasks(responses)
+            validations = await asyncio.gather(*validation_tasks)
+
+            valid_count += sum([validation for validation in validations if validation])
+            start_profile = end_profile
+            end_profile += (resume_count - valid_count)
+            print(valid_count, start_profile, end_profile)
 
         # Deauthorize and close the session 
         await deauth(session)
