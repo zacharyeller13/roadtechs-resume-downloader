@@ -12,8 +12,6 @@ async def test_authenticate() -> None:
         result = await authenticate(session, "https://www.roadtechs.com/bbclient/login.php", "", "")
         assert result.status == 200
 
-        # await session.post("https://www.roadtechs.com/bbclient/logout.php")
-
 @pytest.mark.asyncio
 async def test_authenticate_logged_in() -> None:
 

@@ -150,7 +150,8 @@ async def main() -> None:
     password = getpass("Please type your password (Output will remain blank as you type for privacy): ")
 
     # Get the max resume count to be downloaded
-    # TODO: Change to get a stop OR a start and stop
+    # Number of resumes constantly changes - best to request from the user than to hardcode
+    # Could eventually grab it directly from the site
     resume_count = get_resume_count()
 
     # Set up a semaphore to prevent overloading the server with requests
@@ -171,11 +172,13 @@ async def main() -> None:
         validations = await asyncio.gather(*validation_tasks)
 
         # Request and validation loop until valid_count == resume_count
+        # Initial set of validations
         valid_count = sum([validation for validation in validations if validation])
         start_profile = resume_count
         end_profile = resume_count + (resume_count - valid_count) + 1
         print(valid_count, start_profile, end_profile)
 
+        # All other validations
         while valid_count != resume_count:
             
             print(f"Valid resumes found: {valid_count}")
