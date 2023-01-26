@@ -1,7 +1,6 @@
 import asyncio
 from getpass import getpass
 
-import pdfkit
 from aiohttp import ClientResponse, ClientSession
 from bs4 import BeautifulSoup
 
