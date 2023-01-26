@@ -60,7 +60,7 @@ async def main() -> None:
 
         # Request and validation loop until valid_count == resume_count
         # Initial set of validations
-        valid_count = sum([validation for validation in validations if validation])
+        valid_count = validations.count(True)
         start_profile = resume_count
         end_profile = resume_count + (resume_count - valid_count) + 1
 
@@ -85,7 +85,7 @@ async def main() -> None:
             validation_tasks = get_validation_tasks(responses)
             validations = await asyncio.gather(*validation_tasks)
 
-            valid_count += sum([validation for validation in validations if validation])
+            valid_count += validations.count(True)
             start_profile = end_profile
             end_profile += (resume_count - valid_count)
 
