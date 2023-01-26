@@ -1,7 +1,7 @@
 import pytest
 from aiohttp import ClientResponseError, ClientSession
 
-from async_roadtechs_downloader import authenticate, deauth
+from aiohttp_extensions import authenticate, deauth
 from exceptions import AlreadyLoggedInError, LoginError
 
 
