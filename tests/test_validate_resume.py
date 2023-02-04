@@ -3,7 +3,7 @@ import unittest.mock
 
 import pytest
 
-from async_roadtechs_downloader import validate_resume
+from tasks import validate_resume
 
 
 @pytest.mark.asyncio
