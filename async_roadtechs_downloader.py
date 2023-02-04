@@ -21,8 +21,8 @@ def get_resume_count() -> int:
     try:
         resume_count = int(resume_count)
     except ValueError:
-        print("Valid number not provided, falling back to default value (6978)")
-        resume_count = 6978
+        print("Valid number not provided, falling back to default value (7017)")
+        resume_count = 7017
 
     return resume_count
 
@@ -72,7 +72,7 @@ async def main() -> None:
         await write_pdfs(responses, validations)
 
         # All other validations
-        while valid_count != resume_count:
+        while valid_count < resume_count:
             
             print(f"Valid resumes found: {valid_count}")
             print(f"Fetching profiles {start_profile} through {end_profile}")
