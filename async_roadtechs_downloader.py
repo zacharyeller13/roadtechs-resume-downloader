@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from aiohttp_extensions import authenticate, deauth
-from pdf_writer import write_pdf, get_resume_name
+from pdf_writer import write_pdfs
 from tasks import get_profile_tasks, get_validation_tasks
 
 
@@ -21,8 +21,8 @@ def get_resume_count() -> int:
     try:
         resume_count = int(resume_count)
     except ValueError:
-        print("Valid number not provided, falling back to default value (6978)")
-        resume_count = 6978
+        print("Valid number not provided, falling back to default value (7017)")
+        resume_count = 7017
 
     return resume_count
 
@@ -60,7 +60,7 @@ async def main() -> None:
 
         # Request and validation loop until valid_count == resume_count
         # Initial set of validations
-        valid_count = sum([validation for validation in validations if validation])
+        valid_count = validations.count(True)
         start_profile = resume_count
         end_profile = resume_count + (resume_count - valid_count) + 1
 
@@ -69,10 +69,10 @@ async def main() -> None:
 
         # Need to write only valid resumes to PDF files
         # Do this for the initial set of responses, then again below for each request-validation loop
-        # TODO
+        await write_pdfs(responses, validations)
 
         # All other validations
-        while valid_count != resume_count:
+        while valid_count < resume_count:
             
             print(f"Valid resumes found: {valid_count}")
             print(f"Fetching profiles {start_profile} through {end_profile}")
@@ -85,12 +85,15 @@ async def main() -> None:
             validation_tasks = get_validation_tasks(responses)
             validations = await asyncio.gather(*validation_tasks)
 
-            valid_count += sum([validation for validation in validations if validation])
+            valid_count += validations.count(True)
             start_profile = end_profile
             end_profile += (resume_count - valid_count)
 
             # For testing/validation
             print(valid_count, start_profile, end_profile)
+
+            # Write valid resumes again
+            await write_pdfs(responses, validations)
 
         # Deauthorize and close the session 
         await deauth(session)
