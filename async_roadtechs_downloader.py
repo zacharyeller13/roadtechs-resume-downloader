@@ -2,9 +2,9 @@ import asyncio
 from getpass import getpass
 
 from aiohttp import ClientSession
-from bs4 import BeautifulSoup
 
 from aiohttp_extensions import authenticate, deauth
+from log import create_logger
 from pdf_writer import write_pdfs
 from tasks import get_profile_tasks, get_validation_tasks
 
@@ -44,60 +44,76 @@ async def main() -> None:
     # Set up a semaphore to prevent overloading the server with requests
     semaphore = asyncio.Semaphore(500)
 
+    # Create a logger
+    logger = create_logger()
+
     async with ClientSession() as session:
 
-        # Authenticate the ClientSession with username and password provided above
-        response = await authenticate(session, login_url, username, password)
-        print(response)
+        try:
 
-        # Get async tasks and run to retrieve all profiles
-        profile_tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
-        responses = await asyncio.gather(*profile_tasks)
+            # Authenticate the ClientSession with username and password provided above
+            response = await authenticate(session, login_url, username, password)
+            logger.info(str(response))
 
-        # Get async validation tasks and run to validate profiles
-        validation_tasks = get_validation_tasks(responses)
-        validations = await asyncio.gather(*validation_tasks)
-
-        # Request and validation loop until valid_count == resume_count
-        # Initial set of validations
-        valid_count = validations.count(True)
-        start_profile = resume_count
-        end_profile = resume_count + (resume_count - valid_count) + 1
-
-        # For testing/validation
-        print(valid_count, start_profile, end_profile)
-
-        # Need to write only valid resumes to PDF files
-        # Do this for the initial set of responses, then again below for each request-validation loop
-        await write_pdfs(responses, validations)
-
-        # All other validations
-        while valid_count < resume_count:
-            
-            print(f"Valid resumes found: {valid_count}")
-            print(f"Fetching profiles {start_profile} through {end_profile}")
-
-            # Get profile tasks and run
-            profile_tasks = get_profile_tasks(profile_url, session, end_profile, semaphore, start_profile)
+            # Get async tasks and run to retrieve all profiles
+            profile_tasks = get_profile_tasks(profile_url, session, resume_count, semaphore)
             responses = await asyncio.gather(*profile_tasks)
 
-            # Get validation tasks and run
+            # Get async validation tasks and run to validate profiles
             validation_tasks = get_validation_tasks(responses)
             validations = await asyncio.gather(*validation_tasks)
 
-            valid_count += validations.count(True)
-            start_profile = end_profile
-            end_profile += (resume_count - valid_count)
+            # Request and validation loop until valid_count == resume_count
+            # Initial set of validations
+            valid_count = validations.count(True)
+            start_profile = resume_count
+            end_profile = resume_count + (resume_count - valid_count) + 1
 
-            # For testing/validation
-            print(valid_count, start_profile, end_profile)
+            # For testing/validation/logging
+            logger.info(f"Variables: {valid_count=}, {start_profile=}, {end_profile=}")
 
-            # Write valid resumes again
+            # Need to write only valid resumes to PDF files
+            # Do this for the initial set of responses, then again below for each request-validation loop
             await write_pdfs(responses, validations)
 
-        # Deauthorize and close the session 
-        await deauth(session)
-        await session.close()
+            # All other validations
+            # Add second while condition to break if we're risking an infinite loop
+            while (valid_count < resume_count) and (end_profile < 5*resume_count):
+                
+                logger.info(f"Valid resumes found: {valid_count}")
+                logger.info(f"Fetching profiles {start_profile} through {end_profile}")
+
+                # Get profile tasks and run
+                profile_tasks = get_profile_tasks(profile_url, session, end_profile, semaphore, start_profile)
+                responses = await asyncio.gather(*profile_tasks)
+
+                # Get validation tasks and run
+                validation_tasks = get_validation_tasks(responses)
+                validations = await asyncio.gather(*validation_tasks)
+
+                valid_count += validations.count(True)
+                start_profile = end_profile
+                end_profile += (resume_count - valid_count)
+
+                # For testing/validation/logging
+                logger.info(f"Variables: {valid_count=}, {start_profile=}, {end_profile=}")
+
+                # Write valid resumes again
+                await write_pdfs(responses, validations)
+
+        except:
+
+            # Catch any exceptions and log them to console and log file
+            issue = f"exception occured\n"
+            issue += "---------------------------------------------------------------------------------"
+            logger.exception(issue)
+
+        finally:
+
+            # Put this in finally block to avoid leaving an open session
+            # Deauthorize and close the session
+            await deauth(session)
+            await session.close()
 
 
 if __name__ == "__main__":

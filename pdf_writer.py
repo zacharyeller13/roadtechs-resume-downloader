@@ -1,3 +1,4 @@
+import os
 import pdfkit
 
 from aiohttp import ClientResponse
@@ -16,7 +17,7 @@ def write_pdf(soup: BeautifulSoup) -> bool:
     resume_name = get_resume_name(soup)
 
     if resume_name != "":
-        return pdfkit.from_string(str(soup.body), f"{resume_name}.pdf")
+        return pdfkit.from_string(str(soup.body), f"{os.path.dirname(__file__)}/resumes/{resume_name}.pdf")
     else:
         return False
 
