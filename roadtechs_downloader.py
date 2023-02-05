@@ -1,4 +1,5 @@
 import asyncio
+import os
 from getpass import getpass
 
 from aiohttp import ClientSession
@@ -44,6 +45,9 @@ async def main() -> None:
     # Set up a semaphore to prevent overloading the server with requests
     semaphore = asyncio.Semaphore(500)
 
+    # Set destination folder for PDF resumes
+    destination_folder = f"{os.path.dirname(__file__)}/resumes"
+
     # Create a logger
     logger = create_logger()
 
@@ -74,7 +78,7 @@ async def main() -> None:
 
             # Need to write only valid resumes to PDF files
             # Do this for the initial set of responses, then again below for each request-validation loop
-            await write_pdfs(responses, validations)
+            await write_pdfs(responses, validations, destination_folder)
 
             # All other validations
             # Add second while condition to break if we're risking an infinite loop
@@ -99,7 +103,7 @@ async def main() -> None:
                 logger.info(f"Variables: {valid_count=}, {start_profile=}, {end_profile=}")
 
                 # Write valid resumes again
-                await write_pdfs(responses, validations)
+                await write_pdfs(responses, validations, destination_folder)
 
         except:
 
