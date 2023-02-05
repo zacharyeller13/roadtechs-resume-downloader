@@ -10,7 +10,7 @@ def get_resume_name(soup: BeautifulSoup) -> str:
     tag = soup.find("span", id="hdr1")
     name = tag.text.replace('\n', '').split() if tag else []
 
-    return ' '.join(name)
+    return ' '.join([n for n in name if n.isalpha() or n.isspace()])
 
 def write_pdf(soup: BeautifulSoup, destination_folder: str) -> bool:
 
