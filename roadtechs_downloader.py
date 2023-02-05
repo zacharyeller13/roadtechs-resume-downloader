@@ -1,9 +1,12 @@
+# built-ins
 import asyncio
 import os
 from getpass import getpass
 
+# installed modules
 from aiohttp import ClientSession
 
+# local modules
 from aiohttp_extensions import authenticate, deauth
 from log import create_logger
 from pdf_writer import write_pdfs
