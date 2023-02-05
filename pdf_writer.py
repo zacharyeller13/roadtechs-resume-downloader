@@ -17,7 +17,11 @@ def write_pdf(soup: BeautifulSoup, destination_folder: str) -> bool:
     resume_name = get_resume_name(soup)
 
     if resume_name != "":
-        return pdfkit.from_string(str(soup.body), f"{destination_folder}/{resume_name}.pdf")
+        return pdfkit.from_string(
+            str(soup.body), 
+            f"{destination_folder}/{resume_name}.pdf",
+            options={'encoding': "UTF-8"}
+        )
     else:
         return False
 
