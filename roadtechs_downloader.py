@@ -1,9 +1,12 @@
+# built-ins
 import asyncio
 import os
 from getpass import getpass
 
+# installed modules
 from aiohttp import ClientSession
 
+# local modules
 from aiohttp_extensions import authenticate, deauth
 from log import create_logger
 from pdf_writer import write_pdfs
@@ -43,7 +46,7 @@ async def main() -> None:
     resume_count = get_resume_count()
 
     # Set up a semaphore to prevent overloading the server with requests
-    semaphore = asyncio.Semaphore(500)
+    semaphore = asyncio.BoundedSemaphore(100)
 
     # Set destination folder for PDF resumes
     destination_folder = f"{os.path.dirname(__file__)}/resumes"
@@ -72,6 +75,8 @@ async def main() -> None:
             valid_count = validations.count(True)
             start_profile = resume_count
             end_profile = resume_count + (resume_count - valid_count) + 1
+
+            logger.info(f"Valid resumes found: {valid_count}")
 
             # For testing/validation/logging
             logger.info(f"Variables: {valid_count=}, {start_profile=}, {end_profile=}")
@@ -118,6 +123,8 @@ async def main() -> None:
             # Deauthorize and close the session
             await deauth(session)
             await session.close()
+    
+    input("Press any key to exit...")
 
 
 if __name__ == "__main__":

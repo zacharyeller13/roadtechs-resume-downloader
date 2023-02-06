@@ -10,6 +10,7 @@ pdfkit = "*"
 pytest = "*"
 aiohttp = "*"
 pytest-asyncio = "*"
+pyinstaller = "*"
 
 [dev-packages]
 ipykernel = "*"
