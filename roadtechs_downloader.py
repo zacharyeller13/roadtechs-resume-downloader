@@ -123,6 +123,8 @@ async def main() -> None:
             # Deauthorize and close the session
             await deauth(session)
             await session.close()
+    
+    input("Press any key to exit...")
 
 
 if __name__ == "__main__":
