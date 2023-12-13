@@ -1,5 +1,8 @@
 # roadtechs-resume-downloader
 
+> [!NOTE]
+> No longer in use and thus unmaintained and archived.
+
 Software to auto-download all resumes/profiles from job recruiting site Roadtechs.
 
 ## Table of Contents
